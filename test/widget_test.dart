@@ -4,12 +4,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:flutter_activity/data/student_account_repository.dart';
 import 'package:flutter_activity/main.dart';
 
 void main() {
-  setUp(() {
+  setUp(() async {
     SharedPreferences.setMockInitialValues({
-      'mdc_connect_concerns_v1': jsonEncode([
+      ConcernRepository.storageKeyFor('S1234567'): jsonEncode([
         {
           'id': 'test-1',
           'title': 'LIBRARY WIFI',
@@ -20,6 +21,10 @@ void main() {
         },
       ]),
     });
+    await StudentAccountRepository().createAccount(
+      schoolId: 'S1234567',
+      password: 'Correct!123',
+    );
   });
 
   testWidgets('student can submit, search, and delete a concern', (
@@ -27,6 +32,7 @@ void main() {
   ) async {
     await tester.pumpWidget(const MdcConnectApp());
     await tester.pumpAndSettle();
+    await _signIn(tester);
     expect(find.text('LIBRARY WIFI'), findsOneWidget);
 
     await tester.tap(find.text('How it works').first);
@@ -69,6 +75,7 @@ void main() {
   testWidgets('validates concern details before submission', (tester) async {
     await tester.pumpWidget(const MdcConnectApp());
     await tester.pumpAndSettle();
+    await _signIn(tester);
     await tester.tap(find.byType(FloatingActionButton));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Submit concern'));
@@ -79,4 +86,33 @@ void main() {
       findsOneWidget,
     );
   });
+
+  testWidgets('student can create an account and sign in', (tester) async {
+    await tester.pumpWidget(const MdcConnectApp());
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('New student? Create an account'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextFormField).at(0), 'MDC-0002');
+    await tester.enterText(find.byType(TextFormField).at(1), 'Student!456');
+    await tester.enterText(find.byType(TextFormField).at(2), 'Student!456');
+    await tester.tap(find.text('Create account'));
+    await tester.pumpAndSettle();
+    expect(find.text('MDC-0002'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('Sign out'));
+    await tester.pumpAndSettle();
+    await _signIn(tester, schoolId: 'mdc-0002', password: 'Student!456');
+    expect(find.text('MDC-0002'), findsOneWidget);
+  });
+}
+
+Future<void> _signIn(
+  WidgetTester tester, {
+  String schoolId = 'S1234567',
+  String password = 'Correct!123',
+}) async {
+  await tester.enterText(find.byType(TextFormField).at(0), schoolId);
+  await tester.enterText(find.byType(TextFormField).at(1), password);
+  await tester.tap(find.text('Sign in'));
+  await tester.pumpAndSettle();
 }

@@ -4,6 +4,9 @@ A Flutter student concern management prototype for submitting and following camp
 
 ## Features
 
+- Create an account and sign in with a school ID and password.
+- Keep each student's saved concerns separate on the device.
+- Use the royal-blue Material theme across sign-in and concern screens.
 - Submit a concern with validated title, category, and description fields.
 - Browse concerns with `ListView.builder`, search by text, and filter by status.
 - Delete a concern after confirmation.
@@ -14,6 +17,8 @@ A Flutter student concern management prototype for submitting and following camp
 ## Demo data and limits
 
 JSONPlaceholder supplies sample posts for the API integration requirement. New concerns and deletions are saved locally; they are not sent to MDC staff. A real management workflow needs a school backend and authentication.
+
+Student accounts are also local to the device. Passwords use salted hashes in this prototype. Account creation does not verify that an ID belongs to an enrolled student. Use MDC's authentication service for real student credentials and shared account access.
 
 ## Run
 

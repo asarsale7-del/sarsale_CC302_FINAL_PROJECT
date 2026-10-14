@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'data/student_account_repository.dart';
+
 void main() => runApp(const MdcConnectApp());
 
 class MdcConnectApp extends StatelessWidget {
@@ -15,9 +17,9 @@ class MdcConnectApp extends StatelessWidget {
     debugShowCheckedModeBanner: false,
     theme: ThemeData(
       useMaterial3: true,
-      colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF174D39)),
-      scaffoldBackgroundColor: const Color(0xFFF5F7F4),
-      appBarTheme: const AppBarTheme(backgroundColor: Color(0xFFF5F7F4)),
+      colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF4169E1)),
+      scaffoldBackgroundColor: const Color(0xFFF5F7FF),
+      appBarTheme: const AppBarTheme(backgroundColor: Color(0xFFF5F7FF)),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: Colors.white,
@@ -27,12 +29,263 @@ class MdcConnectApp extends StatelessWidget {
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: Color(0xFFE0E7E1)),
+          borderSide: const BorderSide(color: Color(0xFFE0E5F5)),
         ),
       ),
     ),
-    home: const ConcernsPage(),
+    home: const _AuthGate(),
   );
+}
+
+class _AuthGate extends StatefulWidget {
+  const _AuthGate();
+
+  @override
+  State<_AuthGate> createState() => _AuthGateState();
+}
+
+class _AuthGateState extends State<_AuthGate> {
+  String? _signedInSchoolId;
+
+  @override
+  Widget build(BuildContext context) {
+    final schoolId = _signedInSchoolId;
+    if (schoolId == null) {
+      return StudentAuthPage(
+        onSignedIn: (id) => setState(() => _signedInSchoolId = id),
+      );
+    }
+    return ConcernsPage(
+      key: ValueKey(schoolId),
+      studentId: schoolId,
+      onSignOut: () => setState(() => _signedInSchoolId = null),
+    );
+  }
+}
+
+class StudentAuthPage extends StatefulWidget {
+  const StudentAuthPage({super.key, required this.onSignedIn});
+  final ValueChanged<String> onSignedIn;
+
+  @override
+  State<StudentAuthPage> createState() => _StudentAuthPageState();
+}
+
+class _StudentAuthPageState extends State<StudentAuthPage> {
+  final _repository = StudentAccountRepository();
+  final _formKey = GlobalKey<FormState>();
+  final _schoolId = TextEditingController();
+  final _password = TextEditingController();
+  final _confirmPassword = TextEditingController();
+  bool _creatingAccount = false;
+  bool _obscurePassword = true;
+  bool _busy = false;
+  String? _error;
+
+  @override
+  void dispose() {
+    _schoolId.dispose();
+    _password.dispose();
+    _confirmPassword.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submit() async {
+    if (!_formKey.currentState!.validate()) return;
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+    final id = StudentAccountRepository.normalizeSchoolId(_schoolId.text);
+    try {
+      if (_creatingAccount) {
+        await _repository.createAccount(schoolId: id, password: _password.text);
+      } else {
+        final authenticated = await _repository.authenticate(
+          schoolId: id,
+          password: _password.text,
+        );
+        if (!authenticated) {
+          setState(() => _error = 'School ID or password is incorrect.');
+          return;
+        }
+      }
+      widget.onSignedIn(id);
+    } on StudentAccountException catch (error) {
+      setState(() => _error = error.message);
+    } catch (_) {
+      setState(() => _error = 'Could not save your account. Please try again.');
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isCreate = _creatingAccount;
+    return Scaffold(
+      body: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 440),
+              child: Card(
+                color: Colors.white,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(28),
+                  side: const BorderSide(color: Color(0xFFE0E5F5)),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        const CircleAvatar(
+                          radius: 30,
+                          backgroundColor: Color(0xFFEAF0FF),
+                          child: Icon(
+                            Icons.school_rounded,
+                            color: Color(0xFF4169E1),
+                            size: 32,
+                          ),
+                        ),
+                        const SizedBox(height: 18),
+                        Text(
+                          isCreate
+                              ? 'Create student account'
+                              : 'Welcome to MDC Connect',
+                          textAlign: TextAlign.center,
+                          style: Theme.of(context).textTheme.headlineSmall
+                              ?.copyWith(fontWeight: FontWeight.w800),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          isCreate
+                              ? 'Use your school ID to get started.'
+                              : 'Sign in with your school ID to manage your concerns.',
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            color: Color(0xFF5C6680),
+                            height: 1.4,
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                        TextFormField(
+                          controller: _schoolId,
+                          textCapitalization: TextCapitalization.characters,
+                          autocorrect: false,
+                          decoration: const InputDecoration(
+                            labelText: 'School ID',
+                            prefixIcon: Icon(Icons.badge_outlined),
+                          ),
+                          validator: (value) {
+                            final id = value?.trim() ?? '';
+                            return RegExp(r'^[A-Za-z0-9-]{4,24}$').hasMatch(id)
+                                ? null
+                                : 'Enter a valid school ID (4–24 letters or numbers).';
+                          },
+                        ),
+                        const SizedBox(height: 14),
+                        TextFormField(
+                          controller: _password,
+                          obscureText: _obscurePassword,
+                          decoration: InputDecoration(
+                            labelText: 'Password',
+                            prefixIcon: const Icon(Icons.lock_outline_rounded),
+                            suffixIcon: IconButton(
+                              tooltip: _obscurePassword
+                                  ? 'Show password'
+                                  : 'Hide password',
+                              onPressed: () => setState(
+                                () => _obscurePassword = !_obscurePassword,
+                              ),
+                              icon: Icon(
+                                _obscurePassword
+                                    ? Icons.visibility_outlined
+                                    : Icons.visibility_off_outlined,
+                              ),
+                            ),
+                          ),
+                          validator: (value) => (value?.length ?? 0) >= 8
+                              ? null
+                              : 'Password must be at least 8 characters.',
+                        ),
+                        if (isCreate) ...[
+                          const SizedBox(height: 14),
+                          TextFormField(
+                            controller: _confirmPassword,
+                            obscureText: true,
+                            decoration: const InputDecoration(
+                              labelText: 'Confirm password',
+                              prefixIcon: Icon(Icons.lock_reset_rounded),
+                            ),
+                            validator: (value) => value == _password.text
+                                ? null
+                                : 'Passwords do not match.',
+                          ),
+                        ],
+                        if (_error != null) ...[
+                          const SizedBox(height: 14),
+                          Text(
+                            _error!,
+                            style: const TextStyle(color: Color(0xFFB3261E)),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                        const SizedBox(height: 20),
+                        FilledButton(
+                          onPressed: _busy ? null : _submit,
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            child: _busy
+                                ? const SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                : Text(isCreate ? 'Create account' : 'Sign in'),
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: _busy
+                              ? null
+                              : () => setState(() {
+                                  _creatingAccount = !_creatingAccount;
+                                  _error = null;
+                                  _formKey.currentState?.reset();
+                                }),
+                          child: Text(
+                            isCreate
+                                ? 'Already have an account? Sign in'
+                                : 'New student? Create an account',
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        const Text(
+                          'Class project prototype: account details are stored on this device.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: Color(0xFF707A91),
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class Concern {
@@ -64,10 +317,13 @@ class Concern {
 }
 
 class ConcernRepository {
-  static const _key = 'mdc_connect_concerns_v1';
-  Future<List<Concern>> load() async {
+  static String storageKeyFor(String schoolId) =>
+      'mdc_connect_concerns_v1_${StudentAccountRepository.normalizeSchoolId(schoolId)}';
+
+  Future<List<Concern>> load(String schoolId) async {
     final prefs = await SharedPreferences.getInstance();
-    final cached = prefs.getString(_key);
+    final key = storageKeyFor(schoolId);
+    final cached = prefs.getString(key);
     if (cached != null) {
       return (jsonDecode(cached) as List)
           .map((e) => Concern.fromJson(Map<String, dynamic>.from(e)))
@@ -107,20 +363,22 @@ class ConcernRepository {
           status: entry.key == 0 ? 'In review' : 'Received',
         );
       }).toList();
-      await _save(items);
+      await _save(key, items);
       return items;
     } catch (_) {
       final items = _samples;
-      await _save(items);
+      await _save(key, items);
       return items;
     }
   }
 
-  Future<void> save(List<Concern> items) => _save(items);
-  Future<void> _save(List<Concern> items) async {
+  Future<void> save(String schoolId, List<Concern> items) =>
+      _save(storageKeyFor(schoolId), items);
+
+  Future<void> _save(String key, List<Concern> items) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(
-      _key,
+      key,
       jsonEncode(items.map((e) => e.toJson()).toList()),
     );
   }
@@ -155,7 +413,14 @@ class ConcernRepository {
 }
 
 class ConcernsPage extends StatefulWidget {
-  const ConcernsPage({super.key});
+  const ConcernsPage({
+    super.key,
+    required this.studentId,
+    required this.onSignOut,
+  });
+  final String studentId;
+  final VoidCallback onSignOut;
+
   @override
   State<ConcernsPage> createState() => _ConcernsPageState();
 }
@@ -181,7 +446,7 @@ class _ConcernsPageState extends State<ConcernsPage> {
 
   Future<void> _load() async {
     setState(() => _loading = true);
-    final items = await _repo.load();
+    final items = await _repo.load(widget.studentId);
     if (!mounted) return;
     setState(() {
       _items = items;
@@ -191,7 +456,7 @@ class _ConcernsPageState extends State<ConcernsPage> {
   }
 
   Future<void> _save(List<Concern> items) async {
-    await _repo.save(items);
+    await _repo.save(widget.studentId, items);
     if (mounted) setState(() => _items = items);
   }
 
@@ -303,15 +568,26 @@ class _ConcernsPageState extends State<ConcernsPage> {
           _selectedSection == 0 ? 'MDC Connect' : 'How it works',
           style: const TextStyle(fontWeight: FontWeight.w800),
         ),
-        actions: _selectedSection == 0
-            ? [
-                IconButton(
-                  onPressed: _load,
-                  tooltip: 'Refresh concerns',
-                  icon: const Icon(Icons.refresh_rounded),
-                ),
-              ]
-            : null,
+        actions: [
+          Center(
+            child: Text(
+              widget.studentId,
+              style: const TextStyle(color: Color(0xFF4E5C7A), fontSize: 12),
+            ),
+          ),
+          IconButton(
+            onPressed: widget.onSignOut,
+            tooltip: 'Sign out',
+            icon: const Icon(Icons.logout_rounded),
+          ),
+          if (_selectedSection == 0) ...[
+            IconButton(
+              onPressed: _load,
+              tooltip: 'Refresh concerns',
+              icon: const Icon(Icons.refresh_rounded),
+            ),
+          ],
+        ],
       ),
       floatingActionButton: _selectedSection == 0
           ? FloatingActionButton.extended(
@@ -446,7 +722,7 @@ class _GuideCard extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: const Color(0xFF287254), size: 26),
+          Icon(icon, color: const Color(0xFF4169E1), size: 26),
           const SizedBox(width: 14),
           Expanded(
             child: Column(
@@ -478,7 +754,7 @@ class _DashboardHeader extends StatelessWidget {
     padding: const EdgeInsets.all(22),
     decoration: BoxDecoration(
       gradient: const LinearGradient(
-        colors: [Color(0xFF174D39), Color(0xFF287254)],
+        colors: [Color(0xFF2447C6), Color(0xFF4169E1)],
       ),
       borderRadius: BorderRadius.circular(24),
     ),
@@ -491,7 +767,7 @@ class _DashboardHeader extends StatelessWidget {
               const Text(
                 'STUDENT SUPPORT',
                 style: TextStyle(
-                  color: Color(0xFFC4E3D1),
+                  color: Color(0xFFDFE7FF),
                   fontSize: 11,
                   fontWeight: FontWeight.w800,
                   letterSpacing: 1.4,
@@ -563,7 +839,7 @@ class ConcernCard extends StatelessWidget {
                   child: Text(
                     item.category.toUpperCase(),
                     style: const TextStyle(
-                      color: Color(0xFF287254),
+                      color: Color(0xFF4169E1),
                       fontSize: 11,
                       fontWeight: FontWeight.w800,
                       letterSpacing: .7,
