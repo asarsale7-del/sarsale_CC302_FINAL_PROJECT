@@ -1,24 +1,31 @@
-# Gadget Shelf
+﻿# MDC Connect
 
-A Flutter gadget inventory app for keeping a personal tech collection organized.
+A Flutter student concern management prototype for submitting and following campus issues.
 
 ## Features
 
-- Create gadgets with a name, category, price, description, and image.
-- View and search gadgets, with category filters.
-- Edit gadget details or delete a gadget after confirmation.
-- Save the collection locally so changes are available after restarting the app.
-- Start with sample gadgets and replace, edit, or remove them as needed.
+- Submit a concern with validated title, category, and description fields.
+- Browse concerns with `ListView.builder`, search by text, and filter by status.
+- Delete a concern after confirmation.
+- Navigate between the concern feed and a short “How it works” guide.
+- Load sample entries from JSONPlaceholder on first launch and fall back to built-in examples offline.
+- Save entries on the device with SharedPreferences.
 
-## Run the app
+## Demo data and limits
+
+JSONPlaceholder supplies sample posts for the API integration requirement. New concerns and deletions are saved locally; they are not sent to MDC staff. A real management workflow needs a school backend and authentication.
+
+## Run
 
 ```sh
 flutter pub get
 flutter run
 ```
 
-## Run tests
+## Check
 
 ```sh
+flutter analyze
 flutter test
+flutter build web
 ```

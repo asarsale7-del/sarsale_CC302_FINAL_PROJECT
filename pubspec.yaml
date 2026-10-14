@@ -1,5 +1,5 @@
 name: flutter_activity
-description: "A new Flutter project."
+description: "MDC Connect student concern management prototype."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
@@ -34,6 +34,7 @@ dependencies:
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
+  http: ^1.6.0
   shared_preferences: ^2.5.6
 
 dev_dependencies:
@@ -57,14 +58,6 @@ flutter:
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
-
-  assets:
-    - assets/gadgets/smartphone.jpg
-    - assets/gadgets/laptop.jpg
-    - assets/gadgets/headphones.jpg
-    - assets/gadgets/watch.jpg
-    - assets/gadgets/keyboard.jpg
-    - assets/gadgets/earbuds.jpg
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
