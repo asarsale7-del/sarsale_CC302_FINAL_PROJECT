@@ -7,6 +7,7 @@ A Flutter student concern management prototype for submitting and following camp
 - Create an account and sign in with a school ID and password.
 - Keep each student's saved concerns separate on the device.
 - Use the royal-blue Material theme across sign-in and concern screens.
+- Keep the interface palette to blue, yellow, and white.
 - Submit a concern with validated title, category, and description fields.
 - Browse concerns with `ListView.builder`, search by text, and filter by status.
 - Delete a concern after confirmation.

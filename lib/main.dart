@@ -6,6 +6,12 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'data/student_account_repository.dart';
 
+const _royalBlue = Color(0xFF4169E1);
+const _deepBlue = Color(0xFF1D347A);
+const _softBlue = Color(0xFFEAF0FF);
+const _yellow = Color(0xFFFFD84D);
+const _softYellow = Color(0xFFFFF3BF);
+
 void main() => runApp(const MdcConnectApp());
 
 class MdcConnectApp extends StatelessWidget {
@@ -17,9 +23,43 @@ class MdcConnectApp extends StatelessWidget {
     debugShowCheckedModeBanner: false,
     theme: ThemeData(
       useMaterial3: true,
-      colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF4169E1)),
-      scaffoldBackgroundColor: const Color(0xFFF5F7FF),
-      appBarTheme: const AppBarTheme(backgroundColor: Color(0xFFF5F7FF)),
+      colorScheme: ColorScheme.fromSeed(seedColor: _royalBlue).copyWith(
+        primary: _royalBlue,
+        onPrimary: Colors.white,
+        secondary: _yellow,
+        onSecondary: _deepBlue,
+        surface: Colors.white,
+        onSurface: _deepBlue,
+        outline: _softBlue,
+        primaryContainer: _softBlue,
+        onPrimaryContainer: _deepBlue,
+        secondaryContainer: _softYellow,
+        onSecondaryContainer: _deepBlue,
+        error: _royalBlue,
+        onError: Colors.white,
+      ),
+      scaffoldBackgroundColor: Colors.white,
+      appBarTheme: const AppBarTheme(
+        backgroundColor: Colors.white,
+        foregroundColor: _deepBlue,
+      ),
+      textTheme: ThemeData.light().textTheme.apply(
+        bodyColor: _deepBlue,
+        displayColor: _deepBlue,
+      ),
+      iconTheme: const IconThemeData(color: _royalBlue),
+      floatingActionButtonTheme: const FloatingActionButtonThemeData(
+        backgroundColor: _yellow,
+        foregroundColor: _deepBlue,
+      ),
+      navigationBarTheme: const NavigationBarThemeData(
+        backgroundColor: Colors.white,
+        indicatorColor: _yellow,
+      ),
+      snackBarTheme: const SnackBarThemeData(
+        backgroundColor: _royalBlue,
+        contentTextStyle: TextStyle(color: Colors.white),
+      ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: Colors.white,
@@ -29,8 +69,11 @@ class MdcConnectApp extends StatelessWidget {
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: Color(0xFFE0E5F5)),
+          borderSide: const BorderSide(color: _softBlue),
         ),
+        labelStyle: const TextStyle(color: _deepBlue),
+        prefixIconColor: _royalBlue,
+        suffixIconColor: _royalBlue,
       ),
     ),
     home: const _AuthGate(),
@@ -135,7 +178,7 @@ class _StudentAuthPageState extends State<StudentAuthPage> {
                 elevation: 0,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(28),
-                  side: const BorderSide(color: Color(0xFFE0E5F5)),
+                  side: const BorderSide(color: _softBlue),
                 ),
                 child: Padding(
                   padding: const EdgeInsets.all(24),
@@ -146,10 +189,10 @@ class _StudentAuthPageState extends State<StudentAuthPage> {
                       children: [
                         const CircleAvatar(
                           radius: 30,
-                          backgroundColor: Color(0xFFEAF0FF),
+                          backgroundColor: _softYellow,
                           child: Icon(
                             Icons.school_rounded,
-                            color: Color(0xFF4169E1),
+                            color: _royalBlue,
                             size: 32,
                           ),
                         ),
@@ -168,10 +211,7 @@ class _StudentAuthPageState extends State<StudentAuthPage> {
                               ? 'Use your school ID to get started.'
                               : 'Sign in with your school ID to manage your concerns.',
                           textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            color: Color(0xFF5C6680),
-                            height: 1.4,
-                          ),
+                          style: const TextStyle(color: _deepBlue, height: 1.4),
                         ),
                         const SizedBox(height: 24),
                         TextFormField(
@@ -186,7 +226,7 @@ class _StudentAuthPageState extends State<StudentAuthPage> {
                             final id = value?.trim() ?? '';
                             return RegExp(r'^[A-Za-z0-9-]{4,24}$').hasMatch(id)
                                 ? null
-                                : 'Enter a valid school ID (4–24 letters or numbers).';
+                                : 'Enter a valid school ID (4 to 24 letters or numbers).';
                           },
                         ),
                         const SizedBox(height: 14),
@@ -230,10 +270,17 @@ class _StudentAuthPageState extends State<StudentAuthPage> {
                         ],
                         if (_error != null) ...[
                           const SizedBox(height: 14),
-                          Text(
-                            _error!,
-                            style: const TextStyle(color: Color(0xFFB3261E)),
-                            textAlign: TextAlign.center,
+                          Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: _softYellow,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Text(
+                              _error!,
+                              style: const TextStyle(color: _deepBlue),
+                              textAlign: TextAlign.center,
+                            ),
                           ),
                         ],
                         const SizedBox(height: 20),
@@ -270,10 +317,7 @@ class _StudentAuthPageState extends State<StudentAuthPage> {
                         const Text(
                           'Class project prototype: account details are stored on this device.',
                           textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color: Color(0xFF707A91),
-                            fontSize: 12,
-                          ),
+                          style: TextStyle(color: _deepBlue, fontSize: 12),
                         ),
                       ],
                     ),
@@ -528,7 +572,7 @@ class _ConcernsPageState extends State<ConcernsPage> {
           padding: EdgeInsets.fromLTRB(20, 0, 20, 12),
           child: Text(
             'Showing demo concerns while the API is unavailable.',
-            style: TextStyle(color: Color(0xFF59665F), fontSize: 12),
+            style: TextStyle(color: _deepBlue, fontSize: 12),
           ),
         ),
       Padding(
@@ -572,7 +616,7 @@ class _ConcernsPageState extends State<ConcernsPage> {
           Center(
             child: Text(
               widget.studentId,
-              style: const TextStyle(color: Color(0xFF4E5C7A), fontSize: 12),
+              style: const TextStyle(color: _deepBlue, fontSize: 12),
             ),
           ),
           IconButton(
@@ -619,7 +663,7 @@ class _ConcernsPageState extends State<ConcernsPage> {
                             const Icon(
                               Icons.inbox_outlined,
                               size: 48,
-                              color: Color(0xFF87958C),
+                              color: _royalBlue,
                             ),
                             const SizedBox(height: 12),
                             Text(
@@ -715,14 +759,14 @@ class _GuideCard extends StatelessWidget {
     elevation: 0,
     shape: RoundedRectangleBorder(
       borderRadius: BorderRadius.circular(18),
-      side: const BorderSide(color: Color(0xFFE7ECE7)),
+      side: const BorderSide(color: _softBlue),
     ),
     child: Padding(
       padding: const EdgeInsets.all(18),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: const Color(0xFF4169E1), size: 26),
+          Icon(icon, color: _royalBlue, size: 26),
           const SizedBox(width: 14),
           Expanded(
             child: Column(
@@ -735,7 +779,7 @@ class _GuideCard extends StatelessWidget {
                 const SizedBox(height: 6),
                 Text(
                   body,
-                  style: const TextStyle(height: 1.4, color: Color(0xFF59665F)),
+                  style: const TextStyle(height: 1.4, color: _deepBlue),
                 ),
               ],
             ),
@@ -753,9 +797,7 @@ class _DashboardHeader extends StatelessWidget {
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.all(22),
     decoration: BoxDecoration(
-      gradient: const LinearGradient(
-        colors: [Color(0xFF2447C6), Color(0xFF4169E1)],
-      ),
+      gradient: const LinearGradient(colors: [Color(0xFF2447C6), _royalBlue]),
       borderRadius: BorderRadius.circular(24),
     ),
     child: Row(
@@ -767,7 +809,7 @@ class _DashboardHeader extends StatelessWidget {
               const Text(
                 'STUDENT SUPPORT',
                 style: TextStyle(
-                  color: Color(0xFFDFE7FF),
+                  color: _yellow,
                   fontSize: 11,
                   fontWeight: FontWeight.w800,
                   letterSpacing: 1.4,
@@ -815,18 +857,17 @@ class ConcernCard extends StatelessWidget {
   final VoidCallback onDelete;
   @override
   Widget build(BuildContext context) {
-    final color = item.status == 'Resolved'
-        ? const Color(0xFF287254)
-        : item.status == 'In review'
-        ? const Color(0xFF9A6412)
-        : const Color(0xFF4263A5);
+    final color = item.status == 'In review' ? _deepBlue : _royalBlue;
+    final statusBackground = item.status == 'In review'
+        ? _softYellow
+        : _softBlue;
     return Card(
       margin: EdgeInsets.zero,
       color: Colors.white,
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
-        side: const BorderSide(color: Color(0xFFE7ECE7)),
+        side: const BorderSide(color: _softBlue),
       ),
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -839,7 +880,7 @@ class ConcernCard extends StatelessWidget {
                   child: Text(
                     item.category.toUpperCase(),
                     style: const TextStyle(
-                      color: Color(0xFF4169E1),
+                      color: _royalBlue,
                       fontSize: 11,
                       fontWeight: FontWeight.w800,
                       letterSpacing: .7,
@@ -852,7 +893,7 @@ class ConcernCard extends StatelessWidget {
                     vertical: 5,
                   ),
                   decoration: BoxDecoration(
-                    color: color.withValues(alpha: .1),
+                    color: statusBackground,
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
@@ -878,12 +919,12 @@ class ConcernCard extends StatelessWidget {
             const SizedBox(height: 7),
             Text(
               item.description,
-              style: const TextStyle(height: 1.4, color: Color(0xFF59665F)),
+              style: const TextStyle(height: 1.4, color: _deepBlue),
             ),
             const SizedBox(height: 12),
             Text(
               _date(item.date),
-              style: const TextStyle(color: Color(0xFF7D8981), fontSize: 11),
+              style: const TextStyle(color: _deepBlue, fontSize: 11),
             ),
           ],
         ),

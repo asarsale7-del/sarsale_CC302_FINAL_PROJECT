@@ -27,6 +27,16 @@ void main() {
     );
   });
 
+  testWidgets('uses only the requested blue, yellow, and white theme', (
+    tester,
+  ) async {
+    await tester.pumpWidget(const MdcConnectApp());
+    final theme = tester.widget<MaterialApp>(find.byType(MaterialApp)).theme!;
+    expect(theme.colorScheme.primary, const Color(0xFF4169E1));
+    expect(theme.colorScheme.secondary, const Color(0xFFFFD84D));
+    expect(theme.scaffoldBackgroundColor, Colors.white);
+  });
+
   testWidgets('student can submit, search, and delete a concern', (
     tester,
   ) async {
