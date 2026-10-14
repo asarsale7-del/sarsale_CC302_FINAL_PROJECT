@@ -369,12 +369,6 @@ class _StudentAuthPageState extends State<StudentAuthPage> {
                                     : 'New student or staff? Create an account',
                               ),
                             ),
-                            const SizedBox(height: 4),
-                            const Text(
-                              'Class project prototype: account details are stored on this device.',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(color: _deepBlue, fontSize: 12),
-                            ),
                           ],
                         ),
                       ),
