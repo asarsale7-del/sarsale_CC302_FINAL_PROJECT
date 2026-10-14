@@ -669,9 +669,23 @@ class _ConcernsPageState extends State<ConcernsPage> {
     ];
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          _selectedSection == 0 ? 'MDC Connect' : 'How it works',
-          style: const TextStyle(fontWeight: FontWeight.w800),
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ClipOval(
+              child: Image.asset(
+                'assets/mdc_logo.png',
+                width: 34,
+                height: 34,
+                fit: BoxFit.cover,
+              ),
+            ),
+            const SizedBox(width: 10),
+            Text(
+              _selectedSection == 0 ? 'MDC Connect' : 'How it works',
+              style: const TextStyle(fontWeight: FontWeight.w800),
+            ),
+          ],
         ),
         actions: [
           Center(
@@ -864,6 +878,14 @@ class _DashboardHeader extends StatelessWidget {
     padding: const EdgeInsets.all(22),
     decoration: BoxDecoration(
       gradient: const LinearGradient(colors: [Color(0xFF2447C6), _royalBlue]),
+      image: DecorationImage(
+        image: const AssetImage('assets/mdc_main_building.jpg'),
+        fit: BoxFit.cover,
+        colorFilter: ColorFilter.mode(
+          _deepBlue.withValues(alpha: .34),
+          BlendMode.srcATop,
+        ),
+      ),
       borderRadius: BorderRadius.circular(24),
     ),
     child: Row(
