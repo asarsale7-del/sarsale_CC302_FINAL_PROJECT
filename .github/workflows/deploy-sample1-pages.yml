@@ -1,0 +1,55 @@
+name: Deploy sample1 to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "sample1/**"
+      - ".github/workflows/deploy-sample1-pages.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: true
+
+jobs:
+  build-and-deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+          cache-key: flutter-${{ runner.os }}-${{ hashFiles('sample1/pubspec.lock') }}
+
+      - name: Install dependencies
+        run: flutter pub get
+        working-directory: sample1
+
+      - name: Build web app
+        run: flutter build web --release --base-href "/sarsale_CC302_FINAL_PROJECT/"
+        working-directory: sample1
+
+      - name: Set up Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: sample1/build/web
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
