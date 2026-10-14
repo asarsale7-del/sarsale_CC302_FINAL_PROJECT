@@ -89,18 +89,23 @@ class _AuthGate extends StatefulWidget {
 
 class _AuthGateState extends State<_AuthGate> {
   String? _signedInSchoolId;
+  String _signedInAccountType = 'Student';
 
   @override
   Widget build(BuildContext context) {
     final schoolId = _signedInSchoolId;
     if (schoolId == null) {
       return StudentAuthPage(
-        onSignedIn: (id) => setState(() => _signedInSchoolId = id),
+        onSignedIn: (id, accountType) => setState(() {
+          _signedInSchoolId = id;
+          _signedInAccountType = accountType;
+        }),
       );
     }
     return ConcernsPage(
       key: ValueKey(schoolId),
       studentId: schoolId,
+      accountType: _signedInAccountType,
       onSignOut: () => setState(() => _signedInSchoolId = null),
     );
   }
@@ -108,7 +113,7 @@ class _AuthGateState extends State<_AuthGate> {
 
 class StudentAuthPage extends StatefulWidget {
   const StudentAuthPage({super.key, required this.onSignedIn});
-  final ValueChanged<String> onSignedIn;
+  final void Function(String schoolId, String accountType) onSignedIn;
 
   @override
   State<StudentAuthPage> createState() => _StudentAuthPageState();
@@ -124,6 +129,7 @@ class _StudentAuthPageState extends State<StudentAuthPage> {
   bool _obscurePassword = true;
   bool _busy = false;
   String? _error;
+  String _accountType = 'Student';
 
   @override
   void dispose() {
@@ -142,18 +148,23 @@ class _StudentAuthPageState extends State<StudentAuthPage> {
     final id = StudentAccountRepository.normalizeSchoolId(_schoolId.text);
     try {
       if (_creatingAccount) {
-        await _repository.createAccount(schoolId: id, password: _password.text);
+        await _repository.createAccount(
+          schoolId: id,
+          password: _password.text,
+          accountType: _accountType,
+        );
       } else {
         final authenticated = await _repository.authenticate(
           schoolId: id,
           password: _password.text,
+          accountType: _accountType,
         );
         if (!authenticated) {
           setState(() => _error = 'School ID or password is incorrect.');
           return;
         }
       }
-      widget.onSignedIn(id);
+      widget.onSignedIn(id, _accountType);
     } on StudentAccountException catch (error) {
       setState(() => _error = error.message);
     } catch (_) {
@@ -167,166 +178,213 @@ class _StudentAuthPageState extends State<StudentAuthPage> {
   Widget build(BuildContext context) {
     final isCreate = _creatingAccount;
     return Scaffold(
-      body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 440),
-              child: Card(
-                color: Colors.white,
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(28),
-                  side: const BorderSide(color: _softBlue),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Form(
-                    key: _formKey,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        const CircleAvatar(
-                          radius: 30,
-                          backgroundColor: _softYellow,
-                          child: Icon(
-                            Icons.school_rounded,
-                            color: _royalBlue,
-                            size: 32,
-                          ),
-                        ),
-                        const SizedBox(height: 18),
-                        Text(
-                          isCreate
-                              ? 'Create student account'
-                              : 'Welcome to MDC Connect',
-                          textAlign: TextAlign.center,
-                          style: Theme.of(context).textTheme.headlineSmall
-                              ?.copyWith(fontWeight: FontWeight.w800),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          isCreate
-                              ? 'Use your school ID to get started.'
-                              : 'Sign in with your school ID to manage your concerns.',
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(color: _deepBlue, height: 1.4),
-                        ),
-                        const SizedBox(height: 24),
-                        TextFormField(
-                          controller: _schoolId,
-                          textCapitalization: TextCapitalization.characters,
-                          autocorrect: false,
-                          decoration: const InputDecoration(
-                            labelText: 'School ID',
-                            prefixIcon: Icon(Icons.badge_outlined),
-                          ),
-                          validator: (value) {
-                            final id = value?.trim() ?? '';
-                            return RegExp(r'^[A-Za-z0-9-]{4,24}$').hasMatch(id)
-                                ? null
-                                : 'Enter a valid school ID (4 to 24 letters or numbers).';
-                          },
-                        ),
-                        const SizedBox(height: 14),
-                        TextFormField(
-                          controller: _password,
-                          obscureText: _obscurePassword,
-                          decoration: InputDecoration(
-                            labelText: 'Password',
-                            prefixIcon: const Icon(Icons.lock_outline_rounded),
-                            suffixIcon: IconButton(
-                              tooltip: _obscurePassword
-                                  ? 'Show password'
-                                  : 'Hide password',
-                              onPressed: () => setState(
-                                () => _obscurePassword = !_obscurePassword,
-                              ),
-                              icon: Icon(
-                                _obscurePassword
-                                    ? Icons.visibility_outlined
-                                    : Icons.visibility_off_outlined,
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          Image.asset(
+            'assets/campus_background.jpg',
+            fit: BoxFit.cover,
+            alignment: Alignment.center,
+          ),
+          ColoredBox(color: Colors.white.withValues(alpha: .45)),
+          SafeArea(
+            child: Center(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(24),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 440),
+                  child: Card(
+                    color: Colors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(28),
+                      side: const BorderSide(color: _softBlue),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Form(
+                        key: _formKey,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Center(
+                              child: SizedBox.square(
+                                dimension: 112,
+                                child: Image.asset(
+                                  'assets/mdc_logo.png',
+                                  fit: BoxFit.contain,
+                                ),
                               ),
                             ),
-                          ),
-                          validator: (value) => (value?.length ?? 0) >= 8
-                              ? null
-                              : 'Password must be at least 8 characters.',
-                        ),
-                        if (isCreate) ...[
-                          const SizedBox(height: 14),
-                          TextFormField(
-                            controller: _confirmPassword,
-                            obscureText: true,
-                            decoration: const InputDecoration(
-                              labelText: 'Confirm password',
-                              prefixIcon: Icon(Icons.lock_reset_rounded),
-                            ),
-                            validator: (value) => value == _password.text
-                                ? null
-                                : 'Passwords do not match.',
-                          ),
-                        ],
-                        if (_error != null) ...[
-                          const SizedBox(height: 14),
-                          Container(
-                            padding: const EdgeInsets.all(10),
-                            decoration: BoxDecoration(
-                              color: _softYellow,
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Text(
-                              _error!,
-                              style: const TextStyle(color: _deepBlue),
+                            const SizedBox(height: 12),
+                            Text(
+                              isCreate
+                                  ? 'Create $_accountType account'
+                                  : 'Welcome to MDC Connect',
                               textAlign: TextAlign.center,
+                              style: Theme.of(context).textTheme.headlineSmall
+                                  ?.copyWith(fontWeight: FontWeight.w800),
                             ),
-                          ),
-                        ],
-                        const SizedBox(height: 20),
-                        FilledButton(
-                          onPressed: _busy ? null : _submit,
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            child: _busy
-                                ? const SizedBox(
-                                    width: 20,
-                                    height: 20,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                    ),
-                                  )
-                                : Text(isCreate ? 'Create account' : 'Sign in'),
-                          ),
+                            const SizedBox(height: 8),
+                            Text(
+                              isCreate
+                                  ? 'Use your school ID to get started.'
+                                  : 'Sign in with your school ID to manage and submit concerns.',
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                color: _deepBlue,
+                                height: 1.4,
+                              ),
+                            ),
+                            const SizedBox(height: 24),
+                            DropdownButtonFormField<String>(
+                              key: const ValueKey('account-type'),
+                              initialValue: _accountType,
+                              decoration: const InputDecoration(
+                                labelText: 'I am a',
+                                prefixIcon: Icon(Icons.groups_outlined),
+                              ),
+                              items: const [
+                                DropdownMenuItem(
+                                  value: 'Student',
+                                  child: Text('Student'),
+                                ),
+                                DropdownMenuItem(
+                                  value: 'Staff',
+                                  child: Text('School staff'),
+                                ),
+                              ],
+                              onChanged: _busy
+                                  ? null
+                                  : (value) => setState(() {
+                                      _accountType = value ?? 'Student';
+                                      _error = null;
+                                    }),
+                            ),
+                            const SizedBox(height: 14),
+                            TextFormField(
+                              controller: _schoolId,
+                              textCapitalization: TextCapitalization.characters,
+                              autocorrect: false,
+                              decoration: const InputDecoration(
+                                labelText: 'School ID',
+                                prefixIcon: Icon(Icons.badge_outlined),
+                              ),
+                              validator: (value) {
+                                final id = value?.trim() ?? '';
+                                return RegExp(
+                                      r'^[A-Za-z0-9-]{4,24}$',
+                                    ).hasMatch(id)
+                                    ? null
+                                    : 'Enter a valid school ID (4 to 24 letters or numbers).';
+                              },
+                            ),
+                            const SizedBox(height: 14),
+                            TextFormField(
+                              controller: _password,
+                              obscureText: _obscurePassword,
+                              decoration: InputDecoration(
+                                labelText: 'Password',
+                                prefixIcon: const Icon(
+                                  Icons.lock_outline_rounded,
+                                ),
+                                suffixIcon: IconButton(
+                                  tooltip: _obscurePassword
+                                      ? 'Show password'
+                                      : 'Hide password',
+                                  onPressed: () => setState(
+                                    () => _obscurePassword = !_obscurePassword,
+                                  ),
+                                  icon: Icon(
+                                    _obscurePassword
+                                        ? Icons.visibility_outlined
+                                        : Icons.visibility_off_outlined,
+                                  ),
+                                ),
+                              ),
+                              validator: (value) => (value?.length ?? 0) >= 8
+                                  ? null
+                                  : 'Password must be at least 8 characters.',
+                            ),
+                            if (isCreate) ...[
+                              const SizedBox(height: 14),
+                              TextFormField(
+                                controller: _confirmPassword,
+                                obscureText: true,
+                                decoration: const InputDecoration(
+                                  labelText: 'Confirm password',
+                                  prefixIcon: Icon(Icons.lock_reset_rounded),
+                                ),
+                                validator: (value) => value == _password.text
+                                    ? null
+                                    : 'Passwords do not match.',
+                              ),
+                            ],
+                            if (_error != null) ...[
+                              const SizedBox(height: 14),
+                              Container(
+                                padding: const EdgeInsets.all(10),
+                                decoration: BoxDecoration(
+                                  color: _softYellow,
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Text(
+                                  _error!,
+                                  style: const TextStyle(color: _deepBlue),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
+                            ],
+                            const SizedBox(height: 20),
+                            FilledButton(
+                              onPressed: _busy ? null : _submit,
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 12,
+                                ),
+                                child: _busy
+                                    ? const SizedBox(
+                                        width: 20,
+                                        height: 20,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                        ),
+                                      )
+                                    : Text(
+                                        isCreate ? 'Create account' : 'Sign in',
+                                      ),
+                              ),
+                            ),
+                            TextButton(
+                              onPressed: _busy
+                                  ? null
+                                  : () => setState(() {
+                                      _creatingAccount = !_creatingAccount;
+                                      _error = null;
+                                      _formKey.currentState?.reset();
+                                    }),
+                              child: Text(
+                                isCreate
+                                    ? 'Already have an account? Sign in'
+                                    : 'New student or staff? Create an account',
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            const Text(
+                              'Class project prototype: account details are stored on this device.',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(color: _deepBlue, fontSize: 12),
+                            ),
+                          ],
                         ),
-                        TextButton(
-                          onPressed: _busy
-                              ? null
-                              : () => setState(() {
-                                  _creatingAccount = !_creatingAccount;
-                                  _error = null;
-                                  _formKey.currentState?.reset();
-                                }),
-                          child: Text(
-                            isCreate
-                                ? 'Already have an account? Sign in'
-                                : 'New student? Create an account',
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        const Text(
-                          'Class project prototype: account details are stored on this device.',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(color: _deepBlue, fontSize: 12),
-                        ),
-                      ],
+                      ),
                     ),
                   ),
                 ),
               ),
             ),
           ),
-        ),
+        ],
       ),
     );
   }
@@ -460,9 +518,11 @@ class ConcernsPage extends StatefulWidget {
   const ConcernsPage({
     super.key,
     required this.studentId,
+    this.accountType = 'Student',
     required this.onSignOut,
   });
   final String studentId;
+  final String accountType;
   final VoidCallback onSignOut;
 
   @override
@@ -565,6 +625,7 @@ class _ConcernsPageState extends State<ConcernsPage> {
         child: _DashboardHeader(
           total: _items.length,
           review: _items.where((e) => e.status != 'Resolved').length,
+          accountType: widget.accountType,
         ),
       ),
       if (_usingFallback)
@@ -791,8 +852,13 @@ class _GuideCard extends StatelessWidget {
 }
 
 class _DashboardHeader extends StatelessWidget {
-  const _DashboardHeader({required this.total, required this.review});
+  const _DashboardHeader({
+    required this.total,
+    required this.review,
+    required this.accountType,
+  });
   final int total, review;
+  final String accountType;
   @override
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.all(22),
@@ -806,9 +872,9 @@ class _DashboardHeader extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'STUDENT SUPPORT',
-                style: TextStyle(
+              Text(
+                '${accountType.toUpperCase()} SUPPORT',
+                style: const TextStyle(
                   color: _yellow,
                   fontSize: 11,
                   fontWeight: FontWeight.w800,

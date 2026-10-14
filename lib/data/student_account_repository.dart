@@ -14,6 +14,7 @@ class StudentAccountRepository {
   Future<void> createAccount({
     required String schoolId,
     required String password,
+    String accountType = 'Student',
   }) async {
     final normalizedId = normalizeSchoolId(schoolId);
     final accounts = await _readAccounts();
@@ -30,6 +31,7 @@ class StudentAccountRepository {
     accounts[normalizedId] = {
       'salt': salt,
       'passwordHash': _hash(password, salt),
+      'accountType': accountType,
     };
     await _writeAccounts(accounts);
   }
@@ -37,11 +39,13 @@ class StudentAccountRepository {
   Future<bool> authenticate({
     required String schoolId,
     required String password,
+    String accountType = 'Student',
   }) async {
     final account = (await _readAccounts())[normalizeSchoolId(schoolId)];
     if (account == null) return false;
-    return _hash(password, account['salt'] as String) ==
-        account['passwordHash'];
+    final storedType = account['accountType'] as String? ?? 'Student';
+    return storedType == accountType &&
+        _hash(password, account['salt'] as String) == account['passwordHash'];
   }
 
   Future<Map<String, Map<String, dynamic>>> _readAccounts() async {
