@@ -62,7 +62,7 @@ flutter:
 
   assets:
     - assets/mdc_logo.png
-    - assets/campus_background.jpg
+    - assets/mdc-social-share-banner.png
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
