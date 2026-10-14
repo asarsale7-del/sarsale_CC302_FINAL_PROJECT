@@ -182,7 +182,7 @@ class _StudentAuthPageState extends State<StudentAuthPage> {
         fit: StackFit.expand,
         children: [
           Image.asset(
-            'assets/mdc-social-share-banner.png',
+            'assets/mdc_login_background.jpg',
             fit: BoxFit.cover,
             alignment: Alignment.center,
           ),
