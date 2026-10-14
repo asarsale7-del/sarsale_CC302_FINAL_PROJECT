@@ -527,7 +527,7 @@ class _ConcernsPageState extends State<ConcernsPage> {
   final _repo = ConcernRepository();
   final _search = TextEditingController();
   List<Concern> _items = [];
-  bool _loading = true, _usingFallback = false;
+  bool _loading = true;
   String _filter = 'All';
   int _selectedSection = 0;
   @override
@@ -549,7 +549,6 @@ class _ConcernsPageState extends State<ConcernsPage> {
     setState(() {
       _items = items;
       _loading = false;
-      _usingFallback = items.every((item) => item.id.startsWith('sample-'));
     });
   }
 
@@ -622,14 +621,6 @@ class _ConcernsPageState extends State<ConcernsPage> {
           accountType: widget.accountType,
         ),
       ),
-      if (_usingFallback)
-        const Padding(
-          padding: EdgeInsets.fromLTRB(20, 0, 20, 12),
-          child: Text(
-            'Showing demo concerns while the API is unavailable.',
-            style: TextStyle(color: _deepBlue, fontSize: 12),
-          ),
-        ),
       Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20),
         child: TextField(
